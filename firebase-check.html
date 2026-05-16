@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prueba Firebase - UniTutor</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; color: #172033; }
+    button { border: 0; border-radius: 6px; background: #2563eb; color: #fff; cursor: pointer; padding: 10px 14px; }
+    pre { background: #0f172a; color: #dbeafe; padding: 16px; border-radius: 8px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>Prueba de conexion Firebase</h1>
+  <p>Esta pagina solo revisa si Firebase carga y si Firestore responde.</p>
+  <button id="run">Probar conexion</button>
+  <pre id="out">Listo.</pre>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js';
+    import { getAuth } from 'https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js';
+    import { collection, getDocs, getFirestore, limit, query } from 'https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: 'AIzaSyAcrN-JwWcYAj1nejJANJwoxeFkX7tlFc4',
+      authDomain: 'unitutor-3fccf.firebaseapp.com',
+      projectId: 'unitutor-3fccf',
+      storageBucket: 'unitutor-3fccf.firebasestorage.app',
+      messagingSenderId: '80135887039',
+      appId: '1:80135887039:web:22b4d23b85f3fccea40e0a'
+    };
+
+    const out = document.getElementById('out');
+    const log = message => { out.textContent += `\n${message}`; };
+
+    document.getElementById('run').addEventListener('click', async () => {
+      out.textContent = 'Inicializando Firebase...';
+      try {
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        log(`Proyecto: ${app.options.projectId}`);
+        log(`Auth inicializado: ${Boolean(auth)}`);
+
+        try {
+          const usersQuery = query(collection(db, 'users'), limit(1));
+          const snap = await getDocs(usersQuery);
+          log(`Firestore responde. Usuarios visibles: ${snap.size}`);
+        } catch (error) {
+          log(`Firestore respondio con restriccion o error: ${error.code || error.message}`);
+          log('Esto puede ser normal si las reglas exigen iniciar sesion.');
+        }
+      } catch (error) {
+        log(`ERROR Firebase: ${error.code || error.message}`);
+      }
+    });
+  </script>
+</body>
+</html>

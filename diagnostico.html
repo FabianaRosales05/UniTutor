@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Diagnostico UniTutor</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; color: #172033; }
+    button { border: 0; border-radius: 6px; background: #2563eb; color: #fff; cursor: pointer; padding: 10px 14px; }
+    pre { background: #0f172a; color: #dbeafe; padding: 16px; border-radius: 8px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>Diagnostico UniTutor</h1>
+  <p>Usa esta pagina si la aplicacion queda en blanco o no inicia sesion.</p>
+  <button id="clear">Limpiar sesion local</button>
+  <button id="test">Probar datos locales</button>
+  <pre id="out">Listo.</pre>
+
+  <script>
+    const out = document.getElementById('out');
+    const keys = [
+      'ut_users',
+      'ut_session',
+      'ut_tutorings_student',
+      'ut_sessions_tutor',
+      'ut_requests',
+      'ut_notifications'
+    ];
+
+    window.addEventListener('error', event => {
+      out.textContent += `\nERROR JS: ${event.message}\n${event.filename}:${event.lineno}`;
+    });
+
+    document.getElementById('clear').addEventListener('click', () => {
+      localStorage.removeItem('ut_session');
+      out.textContent = 'Sesion local limpiada. Abre index.html e intenta entrar otra vez.';
+    });
+
+    document.getElementById('test').addEventListener('click', () => {
+      const report = keys.map(key => {
+        try {
+          const value = localStorage.getItem(key);
+          const parsed = value ? JSON.parse(value) : null;
+          return `${key}: ${Array.isArray(parsed) ? `array(${parsed.length})` : typeof parsed}`;
+        } catch (error) {
+          return `${key}: ERROR ${error.message}`;
+        }
+      });
+      out.textContent = report.join('\n');
+    });
+  </script>
+</body>
+</html>

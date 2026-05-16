@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Configurar Firebase - UniTutor</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f7fb;
+      color: #172033;
+      display: grid;
+      min-height: 100vh;
+      place-items: center;
+    }
+    main {
+      width: min(720px, calc(100% - 32px));
+      background: #fff;
+      border: 1px solid #d9e2ef;
+      border-radius: 8px;
+      padding: 28px;
+      box-shadow: 0 18px 48px rgba(15, 23, 42, .12);
+    }
+    h1 { margin-top: 0; font-size: 28px; }
+    p { line-height: 1.55; }
+    button {
+      border: 0;
+      border-radius: 6px;
+      background: #2563eb;
+      color: #fff;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 700;
+      padding: 12px 18px;
+    }
+    button:disabled { cursor: not-allowed; opacity: .65; }
+    code {
+      background: #eef2ff;
+      border-radius: 4px;
+      padding: 2px 5px;
+    }
+    pre {
+      background: #0f172a;
+      border-radius: 8px;
+      color: #dbeafe;
+      min-height: 160px;
+      overflow: auto;
+      padding: 16px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Configuracion inicial de Firebase</h1>
+    <p>
+      Esta pagina crea usuarios reales de prueba en Firebase Authentication y
+      documentos iniciales en Cloud Firestore para UniTutor.
+    </p>
+    <p>
+      Usuarios que se crearan:
+      <br />
+      <code>estudiante@unisabaneta.edu.co / Unitutor2026</code>
+      <br />
+      <code>tutor@unisabaneta.edu.co / Tutor2026</code>
+    </p>
+    <button id="seed-btn">Crear base de datos de prueba</button>
+    <pre id="log">Listo para iniciar.</pre>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js';
+    import {
+      getAuth,
+      createUserWithEmailAndPassword,
+      signInWithEmailAndPassword,
+      sendPasswordResetEmail,
+      signOut
+    } from 'https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js';
+    import {
+      getFirestore,
+      doc,
+      setDoc,
+      addDoc,
+      collection
+    } from 'https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: 'AIzaSyAcrN-JwWcYAj1nejJANJwoxeFkX7tlFc4',
+      authDomain: 'unitutor-3fccf.firebaseapp.com',
+      projectId: 'unitutor-3fccf',
+      storageBucket: 'unitutor-3fccf.firebasestorage.app',
+      messagingSenderId: '80135887039',
+      appId: '1:80135887039:web:22b4d23b85f3fccea40e0a'
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const logEl = document.getElementById('log');
+    const button = document.getElementById('seed-btn');
+
+    const accounts = {
+      student: {
+        email: 'estudiante@unisabaneta.edu.co',
+        password: 'Unitutor2026',
+        profile: {
+          name: 'Fabiana Rosales',
+          email: 'estudiante@unisabaneta.edu.co',
+          role: 'student',
+          career: 'Ingenieria de Sistemas',
+          semester: 6,
+          avg: 4.2,
+          rating: 4.5
+        }
+      },
+      tutor: {
+        email: 'tutor@unisabaneta.edu.co',
+        password: 'Tutor2026',
+        profile: {
+          name: 'Carlos Andrade Lopez',
+          email: 'tutor@unisabaneta.edu.co',
+          role: 'tutor',
+          career: 'Ingenieria de Sistemas',
+          semester: 9,
+          avg: 4.7,
+          rating: 4.8,
+          subjects: ['Calculo Diferencial', 'Algebra Lineal', 'Programacion I'],
+          bio: 'Tutor con experiencia en matematicas y programacion.',
+          availability: [
+            { day: 'Lunes', start: '08:00', end: '10:00' },
+            { day: 'Miercoles', start: '14:00', end: '16:00' }
+          ]
+        }
+      }
+    };
+
+    function log(message) {
+      logEl.textContent += `\n${message}`;
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function makeSlotId(tutorId, date, time) {
+      return `${tutorId}_${date}_${time}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+    }
+
+    async function ensureAccount(account) {
+      try {
+        const credential = await createUserWithEmailAndPassword(auth, account.email, account.password);
+        log(`Creado: ${account.email}`);
+        return credential.user;
+      } catch (error) {
+        if (error.code !== 'auth/email-already-in-use') throw error;
+        try {
+          const credential = await signInWithEmailAndPassword(auth, account.email, account.password);
+          log(`Ya existia: ${account.email}`);
+          return credential.user;
+        } catch (signInError) {
+          if (signInError.code === 'auth/invalid-credential' || signInError.code === 'auth/wrong-password') {
+            await sendPasswordResetEmail(auth, account.email);
+            throw new Error(
+              `La cuenta ${account.email} ya existe en Firebase Authentication, pero no usa la contraseña demo configurada. ` +
+              `Se envió un correo de restablecimiento. Cambia la contraseña a ${account.password} o actualízala en Firebase Console > Authentication.`
+            );
+          }
+          throw signInError;
+        }
+      }
+    }
+
+    async function seed() {
+      button.disabled = true;
+      logEl.textContent = 'Conectando con Firebase...';
+
+      try {
+        const studentUser = await ensureAccount(accounts.student);
+        await setDoc(doc(db, 'users', studentUser.uid), {
+          ...accounts.student.profile,
+          habeasDataAccepted: true,
+          habeasDataAcceptedAt: new Date().toISOString(),
+          habeasDataVersion: '2026-05',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+        log('Perfil de estudiante guardado.');
+        await setDoc(doc(db, 'habeasDataConsents', studentUser.uid), {
+          userId: studentUser.uid,
+          email: accounts.student.email,
+          accepted: true,
+          version: '2026-05',
+          source: 'setup-firebase',
+          acceptedAt: new Date().toISOString()
+        }, { merge: true });
+        log('Consentimiento Habeas Data del estudiante guardado.');
+
+        const tutorUser = await ensureAccount(accounts.tutor);
+        await setDoc(doc(db, 'users', tutorUser.uid), {
+          ...accounts.tutor.profile,
+          habeasDataAccepted: true,
+          habeasDataAcceptedAt: new Date().toISOString(),
+          habeasDataVersion: '2026-05',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+        log('Perfil de tutor guardado.');
+        await setDoc(doc(db, 'habeasDataConsents', tutorUser.uid), {
+          userId: tutorUser.uid,
+          email: accounts.tutor.email,
+          accepted: true,
+          version: '2026-05',
+          source: 'setup-firebase',
+          acceptedAt: new Date().toISOString()
+        }, { merge: true });
+        log('Consentimiento Habeas Data del tutor guardado.');
+
+        await signInWithEmailAndPassword(auth, accounts.student.email, accounts.student.password);
+        const slotId = makeSlotId(tutorUser.uid, '2026-07-14', '10:00');
+        const request = {
+          studentId: studentUser.uid,
+          studentName: accounts.student.profile.name,
+          tutorId: tutorUser.uid,
+          tutorName: accounts.tutor.profile.name,
+          tutorEmail: accounts.tutor.email,
+          subject: 'Calculo Diferencial',
+          date: '2026-07-14',
+          time: '10:00',
+          modality: 'Virtual',
+          notes: 'Solicitud inicial de prueba.',
+          slotId,
+          status: 'pending',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        const requestRef = await addDoc(collection(db, 'tutoringRequests'), request);
+        log('Solicitud de tutoria inicial creada.');
+
+        await setDoc(doc(db, 'availabilitySlots', slotId), {
+          tutorId: tutorUser.uid,
+          studentId: studentUser.uid,
+          requestId: requestRef.id,
+          date: request.date,
+          time: request.time,
+          modality: request.modality,
+          status: 'reserved',
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+        log('Horario reservado inicial creado.');
+
+        await addDoc(collection(db, 'notifications'), {
+          userId: studentUser.uid,
+          type: 'info',
+          icon: '📋',
+          color: 'notif-blue',
+          title: 'Firebase conectado',
+          message: 'Tu base de datos de prueba fue creada correctamente.',
+          time: 'Ahora',
+          read: false,
+          createdAt: new Date().toISOString()
+        });
+        log('Notificacion inicial creada.');
+
+        await signOut(auth);
+        log('\nConfiguracion finalizada. Ya puedes abrir index.html e iniciar sesion.');
+      } catch (error) {
+        console.error(error);
+        log(`\nERROR: ${error.code || error.message}`);
+        log('Revisa que Authentication y Firestore esten habilitados y que las reglas permitan la escritura inicial.');
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    button.addEventListener('click', seed);
+  </script>
+</body>
+</html>
