@@ -1,10 +1,8 @@
 # UniTutor - Sistema Integrado de Tutorias
-
 Aplicacion web academica para gestionar tutorias universitarias entre estudiantes y tutores. El proyecto esta construido con HTML5, CSS3, JavaScript vanilla y Firebase Authentication + Cloud Firestore, manteniendo datos locales de respaldo para pruebas sin conexion.
 
 ## Funcionalidades implementadas
-
-- Inicio de sesion con validacion profesional de correo institucional y contrasena.
+- Inicio de sesion con validacion profesional de correo institucional y contraseña.
 - Consentimiento Habeas Data obligatorio antes del acceso.
 - Registro local y en Firestore de la aceptacion de tratamiento de datos.
 - Solicitud, cancelacion y gestion de tutorias.
@@ -31,7 +29,6 @@ proyecto-tutorias/
 ```
 
 ## Requisitos
-
 - Windows 10 o superior.
 - Visual Studio Code.
 - Navegador moderno: Chrome, Edge o Firefox.
@@ -39,7 +36,6 @@ proyecto-tutorias/
 - Proyecto Firebase con Authentication y Cloud Firestore habilitados.
 
 ## Ejecucion local en Windows
-
 Opcion recomendada:
 
 1. Abre la carpeta `proyecto-tutorias` en Visual Studio Code.
@@ -67,7 +63,6 @@ Opcion alternativa en VS Code:
 No se recomienda abrir `index.html` directamente con doble clic porque los imports remotos de Firebase funcionan mejor desde `localhost`.
 
 ## Configuracion Firebase
-
 1. Entra a [Firebase Console](https://console.firebase.google.com/).
 2. Crea o abre el proyecto `unitutor-3fccf`.
 3. Habilita Authentication con proveedor `Email/Password`.
@@ -119,7 +114,6 @@ reviews/{reviewId}
 ```
 
 ## Validaciones
-
 Las validaciones estan centralizadas en `script.js` mediante `VALIDATION_RULES` y atributos `data-validate` en HTML. Incluyen:
 
 - Campos obligatorios.
@@ -132,7 +126,6 @@ Las validaciones estan centralizadas en `script.js` mediante `VALIDATION_RULES` 
 - Validacion en tiempo real y antes de enviar formularios.
 
 ## Reportes
-
 La seccion `Reportes` esta disponible desde el menu lateral para estudiantes y tutores.
 
 - Reporte de tutorias: cantidad total, tutor mas solicitado, estudiantes registrados, materias frecuentes, tabla dinamica, filtro por materia y CSV.
@@ -141,7 +134,6 @@ La seccion `Reportes` esta disponible desde el menu lateral para estudiantes y t
 El boton `Actualizar` intenta sincronizar desde Firebase. Si Firestore no esta disponible, el sistema usa los datos locales sincronizados.
 
 ## Habeas Data
-
 Antes de iniciar sesion el usuario debe aceptar la politica de tratamiento de datos. La aplicacion:
 
 - Muestra una politica en modal.
@@ -151,7 +143,6 @@ Antes de iniciar sesion el usuario debe aceptar la politica de tratamiento de da
 - Actualiza el documento del usuario con fecha y version de aceptacion.
 
 ## Notas academicas
-
 Este proyecto esta preparado para presentacion local. Para produccion se recomienda:
 
 - Revisar reglas de lectura global de reportes segun el rol administrativo requerido.
